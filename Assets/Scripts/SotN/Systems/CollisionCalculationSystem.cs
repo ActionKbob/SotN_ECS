@@ -12,7 +12,6 @@ namespace SotN
         {
             public Movement MovementComponent;
             public readonly Collidable CollidableComponent;
-            public readonly BoxCollider2D ColliderComponent;
         }
 
         struct RaycastOrigins
@@ -26,32 +25,32 @@ namespace SotN
             {
                 Movement movement = entity.MovementComponent;
                 Collidable collisionData = entity.CollidableComponent;
-                BoxCollider2D collider = entity.ColliderComponent;
+
+                collisionData.State.wasGroundedLastFrame = collisionData.State.below;
 
                 ResetCollisionState( collisionData.State );
 
-                RaycastOrigins rayOrigins = GetRaycastOrigins( collider );
-                float2 distanceBetweenRays = GetDistanceBetweenRays( collider );
+                RaycastOrigins rayOrigins = GetRaycastOrigins( collisionData.collider );
+                float2 distanceBetweenRays = GetDistanceBetweenRays( collisionData.collider );
 
                 Vector2 delta = new Vector2( movement.Value.x, movement.Value.y );
 
-                Debug.Log( string.Format( "delta before: {0}", delta ) );
-
                 if( delta.x != 0 )
-                    HandleHorizontalMovement( ref delta, collisionData, collider, rayOrigins, distanceBetweenRays.y );
+                    HandleHorizontalMovement( ref delta, collisionData, rayOrigins, distanceBetweenRays.y );
 
                 if( delta.y != 0 )
-                    HandleVerticalMovement( ref delta, collisionData, collider, rayOrigins, distanceBetweenRays.x );
+                    HandleVerticalMovement( ref delta, collisionData, rayOrigins, distanceBetweenRays.x );
 
-                Debug.Log( string.Format( "delta after: {0}", delta ) );
+                if( !collisionData.State.wasGroundedLastFrame && collisionData.State.below )
+                    collisionData.State.becameGroundedThisFrame = true;
 
                 movement.Value = new float2( delta.x, delta.y );
             }
         }
 
-        private void HandleHorizontalMovement( ref Vector2 _delta, Collidable _collisionData, BoxCollider2D _collider, RaycastOrigins _rayOrigins, float _distanceBetweenRays )
+        private void HandleHorizontalMovement( ref Vector2 _delta, Collidable _collisionData, RaycastOrigins _rayOrigins, float _distanceBetweenRays )
         {
-            float skinWidth = _collider.edgeRadius;
+            float skinWidth = _collisionData.collider.edgeRadius;
 
             bool isGoingRight = _delta.x > 0;
             float rayDistance = math.abs( _delta.x ) + skinWidth;
@@ -91,9 +90,48 @@ namespace SotN
             }
         }
 
-        private void HandleVerticalMovement( ref Vector2 _delta, Collidable _collisionData, BoxCollider2D _collider, RaycastOrigins _rayOrigins, float _distanceBetweenRays )
+        private void HandleVerticalMovement( ref Vector2 _delta, Collidable _collisionData, RaycastOrigins _rayOrigins, float _distanceBetweenRays )
         {
-            //TODO
+            float skinWidth = _collisionData.collider.edgeRadius;
+
+            bool isGoingUp = _delta.x > 0;
+            float rayDistance = math.abs( _delta.y ) + skinWidth;
+            Vector2 rayDirection = ( isGoingUp ) ? Vector2.up : Vector2.down;
+            Vector2 initialRayOrigin = ( isGoingUp ) ? _rayOrigins.TopLeft : _rayOrigins.BottomLeft;
+
+            initialRayOrigin.x += _delta.x;
+
+            for( int i = 0; i < 3; i++ )
+            {
+                Vector2 ray = new Vector2( initialRayOrigin.x, initialRayOrigin.y + i * _distanceBetweenRays );
+
+                Debug.DrawLine( ray, ray + ( rayDirection * rayDistance ), Color.red, 0f );
+
+                _collisionData.Hit = Physics2D.Raycast( ray, rayDirection, rayDistance, _collisionData.ValidCollisionLayers );
+
+                if( _collisionData.Hit )
+                {
+
+                    Debug.DrawRay( _collisionData.Hit.point, Vector2.up, Color.magenta, 0f );
+
+                    _delta.y = _collisionData.Hit.point.y - ray.y;
+                    rayDistance = math.abs( _delta.y );
+
+                    if( isGoingUp )
+                    {
+                        _delta.y -= skinWidth;
+                        _collisionData.State.above = true;
+                    }
+                    else
+                    {
+                        _delta.y += skinWidth;
+                        _collisionData.State.below = true;
+                    }
+
+                    if( rayDistance < skinWidth + 0.001f )
+                        break;
+                }
+            }
         }
 
         private RaycastOrigins GetRaycastOrigins( BoxCollider2D _collider )

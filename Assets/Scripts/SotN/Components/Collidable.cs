@@ -2,6 +2,7 @@ namespace SotN
 {
     using UnityEngine;
 
+    [ RequireComponent( typeof( BoxCollider2D ) ) ]
     public class Collidable : MonoBehaviour
     {
         public RaycastHit2D Hit;
@@ -9,6 +10,14 @@ namespace SotN
         public LayerMask ValidCollisionLayers;
 
         public CollisionState State = new CollisionState();
+
+        public BoxCollider2D collider
+        {
+            get
+            {
+                return GetComponent<BoxCollider2D>();
+            }
+        }
 
         [ System.Serializable ]
         public class CollisionState

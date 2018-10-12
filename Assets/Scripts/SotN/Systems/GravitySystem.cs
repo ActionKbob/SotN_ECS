@@ -24,7 +24,7 @@ namespace SotN
                 Movement movement = gravityFilter.MovementComponents[i];
                 Gravity gravity = gravityFilter.GravityComponents[i];
 
-                movement.Value.x -= gravity.Value * deltaTime;
+                movement.Value.y -= gravity.Value * deltaTime;
             }
         }
     }
