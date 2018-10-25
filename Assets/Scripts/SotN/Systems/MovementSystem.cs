@@ -15,15 +15,15 @@ namespace SotN
 
         protected override void OnUpdate()
         {
+            float deltaTime = Time.deltaTime;
+
             foreach( MovementEntity entity in GetEntities<MovementEntity>() )
             {
                 Transform transform = entity.TransformComponent;
                 float2 movement = entity.MovementComponent.Value;
                 Vector3 movementVector = new Vector3( movement.x, movement.y, 0 );
 
-                transform.Translate( movementVector, Space.World );
-
-                entity.MovementComponent.Value = float2.zero;
+                transform.Translate( movementVector );
             }
         }
     }

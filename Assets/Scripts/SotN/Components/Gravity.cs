@@ -4,6 +4,6 @@ namespace SotN
 
     public class Gravity : MonoBehaviour
     {
-        public float Value = 9.8f;
+        public float Value = 0;
     }
 }

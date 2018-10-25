@@ -7,24 +7,23 @@ namespace SotN
     {
         struct GravityFilter
         {
-            public ComponentArray<Movement> MovementComponents;
-            public readonly ComponentArray<Gravity> GravityComponents;
-            public readonly int Length;
+            public Velocity VelocityComponent;
+            public readonly Gravity GravityComponent;
+            public readonly Collision CollisionComponent;
         }
-
-        [ Inject ]
-        private GravityFilter gravityFilter;
-
+        
         protected override void OnUpdate()
         {
             float deltaTime = Time.deltaTime;
-
-            for( int i = 0; i < gravityFilter.Length; i++ )
+            
+            foreach( GravityFilter entity in GetEntities<GravityFilter>() )
             {
-                Movement movement = gravityFilter.MovementComponents[i];
-                Gravity gravity = gravityFilter.GravityComponents[i];
+                Gravity gravity = entity.GravityComponent;
+                Velocity velocity = entity.VelocityComponent;
+                Collision collisionData = entity.CollisionComponent;
 
-                movement.Value.y -= gravity.Value * deltaTime;
+                if( !collisionData.State.below )
+                    velocity.Value.y -= gravity.Value * deltaTime;
             }
         }
     }

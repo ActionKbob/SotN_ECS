@@ -5,6 +5,6 @@ namespace SotN
 
     public class Movement : MonoBehaviour
     {
-        public float2 Value;
+        public float2 Value = float2.zero;
     }
 }
